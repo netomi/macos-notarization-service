@@ -23,6 +23,7 @@ release:
   github:
     overwrite: true
     changelog:
+      enabled: false
       formatted: ALWAYS
       preset: conventional-commits
       contributors:

@@ -43,7 +43,7 @@ jobs:
       id-token: write
       actions: read
       packages: write
-    uses: jreleaser/release-action/.github/workflows/builder_slsa3.yml@v1.0.0-java
+    uses: OtterdogTest/macos-notarization-service/.github/workflows/builder-jreleaser.yml@main
     with:
       project-version: ${{ needs.precheck.outputs.VERSION }}
       rekor-log-public: false

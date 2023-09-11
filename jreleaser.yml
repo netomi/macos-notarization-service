@@ -1,0 +1,41 @@
+hooks:
+  script:
+    before:
+      - run: './mvnw -ntp verify'
+        condition: '"{{ Env.CI }}" == true'
+        verbose: true
+        filter:
+          includes: ['assemble']
+
+project:
+  name: macos-notarization-service
+  description: REST Service to notarize macOS application bundles and DMG
+  version: 1.2.0
+  links:
+    homepage: https://github.com/eclipse-cbi/macos-notarization-service/
+  copyright: 2019 Eclipse Foundation and others
+  license: EPL-2.0
+  stereotype: WEB
+  java:
+    version: 17
+
+release:
+  github:
+    overwrite: true
+    changelog:
+      formatted: ALWAYS
+      preset: conventional-commits
+      contributors:
+        format: '- {{contributorName}}{{#contributorUsernameAsLink}} ({{.}}){{/contributorUsernameAsLink}}'
+
+assemble:
+  archive:
+    macos-notarization-service:
+      active: ALWAYS
+      formats: [ ZIP ]
+      fileSets:
+        - input: '.'
+          includes: [ 'LICENSE' ]
+
+        - input: target/quarkus-app
+          output: .

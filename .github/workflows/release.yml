@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: '17'
+  JAVA_DISTRO: 'temurin'
+
+jobs:
+  precheck:
+    #if: github.repository == 'OtterdogTest/macos-notarization-service' && startsWith(github.event.head_commit.message, 'Releasing version') != true
+    runs-on: ubuntu-latest
+    outputs:
+      VERSION: ${{ steps.vars.outputs.VERSION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cancel previous run
+        uses: styfle/cancel-workflow-action@0.11.0
+        with:
+          access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRO }}
+          cache: maven
+
+      - name: Version
+        id: vars
+        shell: bash
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "VERSION=$(echo $VERSION)" >> $GITHUB_OUTPUT
+
+  release:
+    needs: [ precheck ]
+    permissions:
+      contents: write
+      id-token: write
+      actions: read
+      packages: write
+    uses: jreleaser/release-action/.github/workflows/builder_slsa3.yml@v1.0.0-java
+    with:
+      project-version: ${{ needs.precheck.outputs.VERSION }}
+      rekor-log-public: false
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}

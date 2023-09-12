@@ -2,7 +2,7 @@ name: Publish
 on:
   push:
     tags:
-      - '*'
+      - 'v*'
 
 env:
   JAVA_VERSION: '17'
@@ -89,7 +89,7 @@ jobs:
     with:
       base64-subjects: ${{ needs.build.outputs.hash }}
 
-  create-release:
+  upload-artifacts:
     # Upload the distribution and provenance to a GitHub release. They remain
     # available as build artifacts for a while as well.
     needs: ['provenance', 'update_release_draft']
@@ -98,10 +98,10 @@ jobs:
       contents: write
     steps:
       - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
-      - name: create release
+      - name: upload artifacts to release
         run: >
-          gh release edit --repo ${{ github.repository }}
+          gh release upload --repo ${{ github.repository }}
           ${{ github.ref_name }}
-          *.intoto.jsonl/* artifact/*
+          *.intoto.jsonl artifact/*
         env:
           GH_TOKEN: ${{ github.token }}

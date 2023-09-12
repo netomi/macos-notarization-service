@@ -1,7 +1,5 @@
 name: Publish
 on:
-  workflow_dispatch:
-
   push:
     tags:
       - '*'
@@ -37,8 +35,15 @@ jobs:
         run: |
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "VERSION=$(echo $VERSION)" >> $GITHUB_OUTPUT
+          
+          echo "Github reference: $GITHUB_REF"
+          echo "Package version: $VERSION"
+          
+          # Check that the package version matches the github ref
+          test "refs/tags/v$VERSION" == "$GITHUB_REF"
 
   build:
+    needs: ['precheck']
     runs-on: ubuntu-latest
     outputs:
       hash: ${{ steps.hash.outputs.hash }}
@@ -59,6 +64,20 @@ jobs:
         with:
           path: target/distributions
 
+  update_release_draft:
+    needs: ['precheck']
+    permissions:
+      contents: write
+      pull-requests: read
+    runs-on: ubuntu-latest
+    steps:
+      # Update the release notes and get the version
+      - uses: release-drafter/release-drafter@v5
+        with:
+          tag: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   provenance:
     needs: ['build']
     permissions:
@@ -73,7 +92,7 @@ jobs:
   create-release:
     # Upload the distribution and provenance to a GitHub release. They remain
     # available as build artifacts for a while as well.
-    needs: ['provenance']
+    needs: ['provenance','update_release_draft']
     runs-on: ubuntu-latest
     permissions:
       contents: write

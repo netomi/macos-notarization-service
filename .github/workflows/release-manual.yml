@@ -33,14 +33,14 @@ jobs:
         id: vars
         shell: bash
         run: |
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          echo "VERSION=$(echo $VERSION)" >> $GITHUB_OUTPUT
+          PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "PROJECT_VERSION=$(echo $PROJECT_VERSION)" >> $GITHUB_OUTPUT
           
-          echo "Github reference: $GITHUB_REF"
-          echo "Package version: $VERSION"
+          echo "GitHub ref name: $GITHUB_REF_NAME"
+          echo "Project version: $PROJECT_VERSION"
           
-          # Check that the package version matches the github ref
-          test "refs/tags/v$VERSION" == "$GITHUB_REF"
+          # Check that the project version matches the GitHub ref name
+          test "v$PROJECT_VERSION" == "$GITHUB_REF_NAME"
 
   build:
     needs: ['precheck']
@@ -71,7 +71,7 @@ jobs:
       pull-requests: read
     runs-on: ubuntu-latest
     steps:
-      # Update the release notes and get the version
+      # Update the release notes for the released version
       - uses: release-drafter/release-drafter@v5
         with:
           tag: ${{ github.ref_name }}
@@ -92,7 +92,7 @@ jobs:
   create-release:
     # Upload the distribution and provenance to a GitHub release. They remain
     # available as build artifacts for a while as well.
-    needs: ['provenance','update_release_draft']
+    needs: ['provenance', 'update_release_draft']
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -100,7 +100,7 @@ jobs:
       - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
       - name: create release
         run: >
-          gh release create --draft --repo ${{ github.repository }}
+          gh release edit --repo ${{ github.repository }}
           ${{ github.ref_name }}
           *.intoto.jsonl/* artifact/*
         env:

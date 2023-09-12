@@ -102,6 +102,6 @@ jobs:
         run: >
           gh release upload --repo ${{ github.repository }}
           ${{ github.ref_name }}
-          *.intoto.jsonl artifact/*
+          *.intoto.jsonl/* artifact/*
         env:
           GH_TOKEN: ${{ github.token }}

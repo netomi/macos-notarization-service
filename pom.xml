@@ -41,7 +41,7 @@
 	<scm>
 		<connection>scm:git:${project.scm.url}</connection>
 		<developerConnection>scm:git:${project.scm.url}</developerConnection>
-		<url>https://github.com/eclipse-cbi/macos-notarization-service.git</url>
+		<url>https://github.com/netomi/macos-notarization-service.git</url>
 		<tag>HEAD</tag>
     </scm>
 

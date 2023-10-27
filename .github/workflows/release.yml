@@ -3,8 +3,8 @@ on:
   workflow_dispatch:
 
 env:
-  BOT_USER_NAME: eclipse-cbi-bot
-  BOT_EMAIL: cbi-bot@eclipse.org
+  BOT_USER_NAME: netomi
+  BOT_EMAIL: thomas.neidhart@gmail.com
   JAVA_VERSION: '17'
   JAVA_DISTRO: 'temurin'
 
@@ -19,7 +19,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     # don't run this workflow in forks
-    if: github.repository == 'eclipse-cbi/macos-notarization-service'
+    if: github.repository == 'netomi/macos-notarization-service'
     permissions:
       contents: write
     outputs:

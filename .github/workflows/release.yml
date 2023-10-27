@@ -1,10 +1,10 @@
 name: Release
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
 
 env:
+  BOT_USER_NAME: eclipse-cbi-bot
+  BOT_EMAIL: cbi-bot@eclipse.org
   JAVA_VERSION: '17'
   JAVA_DISTRO: 'temurin'
 
@@ -13,65 +13,49 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  precheck:
-    if: github.repository == 'eclipse-cbi/macos-notarization-service'
-    runs-on: ubuntu-latest
-    outputs:
-      VERSION: ${{ steps.vars.outputs.VERSION }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Setup Java
-        uses: actions/setup-java@v3
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: ${{ env.JAVA_DISTRO }}
-          cache: maven
-
-      - name: Version
-        id: vars
-        shell: bash
-        run: |
-          PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          echo "PROJECT_VERSION=$(echo $PROJECT_VERSION)" >> $GITHUB_OUTPUT
-
-          echo "GitHub ref name: $GITHUB_REF_NAME"
-          echo "Project version: $PROJECT_VERSION"
-
-          # Check that the project version matches the GitHub ref name
-          test "v$PROJECT_VERSION" == "$GITHUB_REF_NAME"
-
   build:
-    needs: ['precheck']
     runs-on: ubuntu-latest
     outputs:
       hash: ${{ steps.hash.outputs.hash }}
     steps:
+      - run: |
+          git config --global user.name '$${{ env.BOT_USER_NAME }}'
+          git config --global user.email '${{ env.BOT_EMAIL }}'
+
       - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744
+        with:
+          ref: ${{ github.ref }}
+
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: ${{ env.JAVA_DISTRO }}
           cache: maven
-      - run: ./mvnw -ntp -Pdist clean package
-      # Generate hashes used for provenance.
+
+      - run: ./mvnw -ntp -B -Pdist Prelease release:clean release:perform
+
+      - if: cancelled() || failure()
+        run: ./mvnw -B -Prelease release:rollback
+
+        # Generate hashes used for provenance.
       - name: generate hash
         id: hash
         run: cd target/distributions && echo "hash=$(sha256sum * | base64 -w0)" >> $GITHUB_OUTPUT
+
       - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
         with:
           path: target/distributions
 
+
   update_release_draft:
-    needs: ['precheck']
+    needs: ['build']
     permissions:
       contents: write
       pull-requests: read
     runs-on: ubuntu-latest
     steps:
-      # Update the release notes for the released version
+        # Update the release notes for the released version
       - uses: release-drafter/release-drafter@v5
         with:
           tag: ${{ github.ref_name }}

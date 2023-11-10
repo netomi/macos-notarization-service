@@ -3,14 +3,28 @@ name: License vetting status check
 on:
   push:
     branches:
-      - 'master'
+      - ${{ github.event.repository.default_branch }}
   pull_request:
     branches:
-      - 'master'
+      - ${{ github.event.repository.default_branch }}
   issue_comment:
     types: [created]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  call-license-check:
+  runs-on: ubuntu-22.04
+  # don't run this workflow in forks
+  if: github.repository == 'netomi/macos-notarization-service'
+
+  permissions:
+    contents: write
+    issues: write
+    pull-requests: write
+
+  license-check:
     uses: eclipse/dash-licenses/.github/workflows/mavenLicenseCheck.yml@master
     with:
       projectId: technology.cbi

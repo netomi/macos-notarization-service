@@ -2,7 +2,11 @@
 name: License vetting status check
 on:
   push:
+    branches: 
+      - main
   pull_request:
+    branches: 
+      - main
   issue_comment:
     types: [created]
 
@@ -13,8 +17,7 @@ concurrency:
 jobs:
   license-check:
     # don't run this workflow in forks and only for changes to the default branch
-    if: github.repository == 'netomi/macos-notarization-service' && 
-        github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    if: github.repository == 'netomi/macos-notarization-service'
     uses: eclipse/dash-licenses/.github/workflows/mavenLicenseCheck.yml@master
     permissions:
       contents: write

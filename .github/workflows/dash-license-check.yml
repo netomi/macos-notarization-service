@@ -15,17 +15,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  runs-on: ubuntu-22.04
-  # don't run this workflow in forks
-  if: github.repository == 'netomi/macos-notarization-service'
-
-  permissions:
-    contents: write
-    issues: write
-    pull-requests: write
-
   license-check:
+    # don't run this workflow in forks
+    if: github.repository == 'netomi/macos-notarization-service'
     uses: eclipse/dash-licenses/.github/workflows/mavenLicenseCheck.yml@master
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
     with:
       projectId: technology.cbi
     secrets:

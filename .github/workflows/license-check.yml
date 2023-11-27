@@ -34,6 +34,7 @@ jobs:
 
     # Run on all non-comment events specified by the calling workflow and for comments on PRs that have a corresponding body.
     runs-on: ubuntu-22.04
+    needs: ['ort']
     steps:
       - name: Check dependabot PR
         run: echo "isDependabotPR=1" >> $GITHUB_ENV

@@ -1,0 +1,46 @@
+# *************************************************************************
+# * Copyright (c) 2022, 2023 Hannes Wellmann and others.
+# *
+# * This program and the accompanying materials are made available under
+# * the terms of the Eclipse Public License 2.0 which accompanies this
+# * distribution, and is available at https://www.eclipse.org/legal/epl-2.0
+# *
+# * SPDX-License-Identifier: EPL-2.0
+# *      Hannes Wellmann - initial API and implementation
+# *************************************************************************
+# Adapted from https://github.com/eclipse/dash-licenses/blob/master/.github/actions/maven-license-check-action/action.yml
+# for usage in Eclipse SET
+
+name: "Check license vetting status"
+description: "Checks if the licenses of all dependencies are vetted and requests a review in case required and wanted"
+inputs:
+  request-review:
+    description: ""
+    required: false
+    default: ""
+  project-id:
+    description: ""
+    required: false
+    default: ""
+outputs:
+  licenses-vetted:
+    description: "True if all licenses are vetted, else false"
+    value: ${{ steps.license-check-with-review-request.outputs.build-succeeded }}
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Java
+      uses: netomi/macos-notarization-service/.github/actions/setup-java@main
+
+    - id: license-check-with-review-request
+      shell: bash {0} # do not fail-fast
+      run: |
+        curl -L "https://repo.eclipse.org/service/local/artifact/maven/redirect?r=dash-licenses&g=org.eclipse.dash&a=org.eclipse.dash.licenses&v=LATEST" -o dash.jar
+        java -jar dash.jar clearlydefined.txt -project ${{ inputs.project-id }} -summary DEPENDENCIES
+        if [[ $? == 0 ]]; then # All licenses are vetted
+          echo "build-succeeded=1" >> $GITHUB_OUTPUT
+        else
+          echo "build-succeeded=0" >> $GITHUB_OUTPUT
+        fi
+      env:
+        GITHUB_TOKEN: ${{ github.token }}

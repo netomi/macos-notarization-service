@@ -21,5 +21,5 @@ jobs:
         uses: oss-review-toolkit/ort-ci-github-action@v1
         with:
           run: 'analyzer'
-          image: 'ghcr.io/oss-review-toolkit/ort:7.1.0'
+          image: 'ghcr.io/netomi/ort-minimal:1.0.0-14457.sha.a53c6ec'
           log-level: 'debug'

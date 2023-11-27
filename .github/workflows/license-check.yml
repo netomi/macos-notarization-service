@@ -90,10 +90,6 @@ jobs:
         with:
           name: ort-results-artifact-latest
 
-      - name: Display structure of downloaded files
-        run: ls -R
-        working-directory: path/to/artifact
-
       - name: Check license vetting status (and ask for review if requested)
         id: check-license-vetting
         uses: netomi/macos-notarization-service/.github/actions/check-dependencies@main

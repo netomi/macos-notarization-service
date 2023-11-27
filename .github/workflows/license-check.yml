@@ -20,6 +20,6 @@ jobs:
       - name: Run GitHub Action for ORT
         uses: oss-review-toolkit/ort-ci-github-action@v1
         with:
-          run: 'cache-dependencies,analyzer'
+          run: 'cache-dependencies,analyzer,upload-results'
           image: 'ghcr.io/netomi/ort-minimal:1.0.0-14457.sha.a53c6ec'
           log-level: 'info'

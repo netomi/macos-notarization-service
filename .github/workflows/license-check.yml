@@ -158,10 +158,10 @@ jobs:
                   if(line.includes('restricted')) {
                     const values = line.split(", ")
                     let ticket = values[3]
-                    if (values[3].includes("#")) {
+                    if (ticket.includes("#")) {
                        ticket = `[${ticket}](https://gitlab.eclipse.org/eclipsefdn/emo-team/iplab/-/issues/${ticket.substring(1)})`
                     }
-                    commentBody += `| ${values[0] | ${value[1]} | ${value[2]} | ${ticket} |\n`
+                    commentBody += `| ${values[0]} | ${value[1]} | ${value[2]} | ${ticket} |\n`
                   }
                 }
               } else {

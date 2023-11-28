@@ -2,11 +2,11 @@ name: License Check
 
 on:
   push:
-    branches:
-      - 'main'
+    branches: [main]
   pull_request:
-    branches:
-      - 'main'
+    branches: [main]
+  issue_comment:
+    types: [created]
   workflow_dispatch:
 
 env:
@@ -156,7 +156,12 @@ jobs:
                 const lines = content.split('\n')
                 for (const line of lines) {
                   if(line.includes('restricted')) {
-                    commentBody += `| ${line.split(", ").join(" | ")} |\n`
+                    const values = line.split(", ")
+                    let ticket = values[3]
+                    if (values[3].includes("#")) {
+                       ticket = `[${ticket}](https://gitlab.eclipse.org/eclipsefdn/emo-team/iplab/-/issues/${ticket.substring(1)})`
+                    }
+                    commentBody += `| ${values[0] | ${value[1]} | ${value[2]} | ${ticket} |\n`
                   }
                 }
               } else {

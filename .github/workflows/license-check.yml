@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - 'main'
+  pull_request:
+    branches:
+      - 'main'
   workflow_dispatch:
 
 env:
@@ -25,7 +28,7 @@ jobs:
         uses: oss-review-toolkit/ort-ci-github-action@v1
         with:
           run: 'cache-dependencies,analyzer,upload-results'
-          image: 'ghcr.io/netomi/ort-minimal:1.0.0-14459.sha.6375a21'
+          image: 'ghcr.io/netomi/ort-minimal:1.0.0-14460.sha.8d413c3'
           log-level: 'info'
           sw-name: 'artifact'
           sw-version: 'latest'
@@ -43,6 +46,11 @@ jobs:
           github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened')
           && github.actor == 'dependabot[bot]' && github.actor_id == '49699333'
         # For 'issue_comment'-events this job only runs if a comment was added to a PR with body specified above
+
+      - name: Check PR
+        run: echo "isPR=1" >> $GITHUB_ENV
+        if: >
+          github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened')
 
       - name: Set review request
         run: echo "request-review=1" >> $GITHUB_ENV
@@ -102,12 +110,13 @@ jobs:
 
       # Hide outdated License comments
       - uses: int128/hide-comment-action@a3bd9d480e857c8047d7d869e8fc87c43ae039f8 # v1.28.0
+        if: (env.request-review || env.license-check || env.isPR) && (!env.isDependabotPR)
         with:
           ends-with: |
             <!-- tag-license-comment -->
 
       - name: Process license check results
-        if: always()
+        if: (env.request-review || env.license-check || env.isPR) && (!env.isDependabotPR)
         uses: actions/github-script@v6
         with:
           script: |

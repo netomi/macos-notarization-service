@@ -43,7 +43,7 @@
 		<developerConnection>scm:git:${project.scm.url}</developerConnection>
 		<url>https://github.com/eclipse-cbi/macos-notarization-service.git</url>
 		<tag>HEAD</tag>
-    </scm>
+        </scm>
 
 	<dependencyManagement>
 		<dependencies>

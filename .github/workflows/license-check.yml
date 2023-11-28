@@ -161,7 +161,7 @@ jobs:
                     if (ticket.includes("#")) {
                        ticket = `[${ticket}](https://gitlab.eclipse.org/eclipsefdn/emo-team/iplab/-/issues/${ticket.substring(1)})`
                     }
-                    commentBody += `| ${values[0]} | ${value[1]} | ${value[2]} | ${ticket} |\n`
+                    commentBody += `| ${values[0]} | ${values[1]} | ${values[2]} | ${ticket} |\n`
                   }
                 }
               } else {

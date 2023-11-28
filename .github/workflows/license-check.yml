@@ -25,7 +25,7 @@ jobs:
         uses: oss-review-toolkit/ort-ci-github-action@v1
         with:
           run: 'cache-dependencies,analyzer,upload-results'
-          image: 'ghcr.io/netomi/ort-minimal:1.0.0-14458.sha.580a2b9'
+          image: 'ghcr.io/netomi/ort-minimal:1.0.0-14459.sha.6375a21'
           log-level: 'info'
           sw-name: 'artifact'
           sw-version: 'latest'

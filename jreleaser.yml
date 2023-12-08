@@ -95,7 +95,6 @@ catalog:
       active: ALWAYS
   slsa:
     active: ALWAYS
-    attestationName: '{{projectName}}-{{projectVersion}}.zip.intoto.jsonl'
 
 hooks:
   script:

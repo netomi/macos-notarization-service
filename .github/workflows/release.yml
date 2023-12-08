@@ -98,7 +98,7 @@ jobs:
 #        run: |
 #          ./mvnw -ntp -B -Pdist -Prelease -Psbom clean package
 
-    uses: jreleaser/release-action/.github/workflows/builder_slsa3.yml@v1.0.0-java
+    uses: netomi/release-action/.github/workflows/builder_slsa3.yml@java-fix
     with:
       project-version: ${{ needs.precheck.outputs.version }}
       jreleaser-version: '1.9.0'

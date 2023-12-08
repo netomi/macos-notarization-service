@@ -147,7 +147,7 @@ jobs:
 
   prepare-for-next-development-cycle:
     runs-on: ubuntu-latest
-    needs: ['precheck', 'release', 'provenance']
+    needs: ['precheck', 'release']
     permissions:
       contents: write
     steps:

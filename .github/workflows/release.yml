@@ -70,6 +70,9 @@ jobs:
     needs: ['precheck']
     permissions:
       contents: write
+      actions: read
+      packages: write
+      id-token: write
 #    outputs:
 #      hashes: ${{ steps.slsa.outputs.HASHES }}
 #      tagname: ${{ steps.slsa.outputs.TAGNAME }}

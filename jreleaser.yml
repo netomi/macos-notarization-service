@@ -95,7 +95,7 @@ catalog:
       active: ALWAYS
   slsa:
     active: ALWAYS
-    attestationName: {{projectName}}-{{projectVersion}}.zip.intoto.jsonl
+    attestationName: '{{projectName}}-{{projectVersion}}.zip.intoto.jsonl'
 
 hooks:
   script:
@@ -110,4 +110,4 @@ distributions:
   app:
     type: JAVA_BINARY
     artifacts:
-      - path: target/distributions/{{projectName}}-{{projectVersion}}.zip
+      - path: 'target/distributions/{{projectName}}-{{projectVersion}}.zip'

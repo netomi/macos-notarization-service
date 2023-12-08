@@ -93,9 +93,21 @@ catalog:
   sbom:
     cyclonedx:
       active: ALWAYS
+  slsa:
+    active: ALWAYS
+    attestationName: {{projectName}}-{{projectVersion}}.zip.intoto.jsonl
+
+hooks:
+  script:
+    before:
+      - run: './mvnw -ntp -B -Pdist -Prelease -Psbom clean verify package'
+        condition: '"{{ Env.CI }}" == true'
+        verbose: true
+        filter:
+          includes: ['assemble']
 
 distributions:
   app:
-    type: BINARY
+    type: JAVA_BINARY
     artifacts:
       - path: target/distributions/{{projectName}}-{{projectVersion}}.zip

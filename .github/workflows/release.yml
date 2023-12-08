@@ -101,6 +101,7 @@ jobs:
     uses: netomi/release-action/.github/workflows/builder_slsa3.yml@java-fix
     with:
       project-version: ${{ needs.precheck.outputs.version }}
+      branch: 'switch-to-jreleaser'
       jreleaser-version: '1.9.0'
       java-version: 17
       java-distribution: 'temurin'

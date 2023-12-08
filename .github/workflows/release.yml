@@ -1,6 +1,14 @@
 name: Release
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version'
+        required: true
+      version-fragment:
+        description: 'Version fragment to increase for next development cycle'
+        required: false
+        default: 'minor'
 
 env:
   BOT_USER_NAME: eclipse-cbi-bot
@@ -12,19 +20,15 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:  # added using https://github.com/step-security/secure-repo
-  contents: read
-
 jobs:
-  build:
+  precheck:
     runs-on: ubuntu-latest
-    # don't run this workflow in forks
-    if: github.repository == 'eclipse-cbi/macos-notarization-service'
     permissions:
       contents: write
+    # don't run this workflow in forks
+    if: github.repository == 'eclipse-cbi/macos-notarization-service'
     outputs:
-      tag: ${{ steps.retrieve-tag.outputs.tag }}
-      hash: ${{ steps.hash.outputs.hash }}
+      version: ${{ steps.set-version.outputs.VERSION }}
     steps:
       - name: Setup Git User
         run: |
@@ -42,48 +46,83 @@ jobs:
           distribution: ${{ env.JAVA_DISTRO }}
           cache: maven
 
-      - name: Build Release
+      - name: Set Release Version
+        id: set-version
+        shell: bash
         run: |
-          ./mvnw -ntp -B -Prelease release:clean release:prepare -Dmaven.test.skip=true
-          ./mvnw -ntp -B -Pdist -Prelease -Psbom release:perform -Darguments="-Dmaven.deploy.skip=true" -Dgoals=package
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT_VERSION="$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)"
+          RELEASE_VERSION="${{ github.event.inputs.version }}"
 
-      - id: retrieve-tag
-        run: |
-          echo "tag=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
+          echo "PROJECT_VERSION=$(echo $PROJECT_VERSION)" >> $GITHUB_OUTPUT
+          echo "VERSION=$RELEASE_VERSION" >> $GITHUB_OUTPUT
 
-      - if: cancelled() || failure()
-        run: ./mvnw -B -Prelease release:rollback
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "Project version: $PROJECT_VERSION"
+          echo "Release version: $RELEASE_VERSION"
 
-        # Generate hashes used for provenance.
-      - name: generate hash
-        id: hash
-        run: cd target/checkout/target/distributions && echo "hash=$(sha256sum * | base64 -w0)" >> $GITHUB_OUTPUT
+          if [ "$PROJECT_VERSION" != "$RELEASE_VERSION" ]; then
+            ./mvnw -B versions:set versions:commit -DnewVersion=$RELEASE_VERSION
+            git commit -a -m "Releasing version $RELEASE_VERSION"
+            git push origin ${{ github.ref }}
+          fi
 
-      - uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
-        with:
-          path: target/checkout/target/distributions
-
-
-  update_release_draft:
-    needs: ['build']
+  release:
+    runs-on: ubuntu-latest
+    needs: ['precheck']
     permissions:
       contents: write
-      pull-requests: read
-    runs-on: ubuntu-latest
+    outputs:
+      hashes: ${{ steps.slsa.outputs.HASHES }}
+      tagname: ${{ steps.slsa.outputs.TAGNAME }}
     steps:
-      # Update the release notes for the released version
-      - uses: release-drafter/release-drafter@09c613e259eb8d4e7c81c2cb00618eb5fc4575a7 # v5.25.0
+      - name: Setup Git User
+        run: |
+          git config --global user.name '${{ env.BOT_USER_NAME }}'
+          git config --global user.email '${{ env.BOT_EMAIL }}'
+
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
-          tag: ${{ needs.build.outputs.tag }}
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRO }}
+          cache: maven
+
+      - name: Build and Test Package
+        run: |
+          ./mvnw -ntp -B -Pdist -Prelease -Psbom clean package
+
+      - name: Release with JReleaser
+        uses: jreleaser/release-action@v2
+        with:
+          version: '1.9.0'
+          arguments: full-release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JRELEASER_PROJECT_VERSION: ${{ needs.precheck.outputs.version }}
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: JReleaser release output
+        if: always()
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        with:
+          name: jreleaser-release
+          path: |
+            out/jreleaser/trace.log
+            out/jreleaser/output.properties
+
+      - name: Generate Hashes for SLSA provenance
+        shell: bash
+        id: slsa
+        run: |
+          echo "HASHES=$(cat out/jreleaser/checksums/checksums_sha256.txt | base64 -w0)" >> "$GITHUB_OUTPUT"
+          echo "TAGNAME=$(grep tagName out/jreleaser/output.properties | awk -F'=' '{print $2}')" >> "$GITHUB_OUTPUT"
 
   provenance:
-    needs: ['build']
+    name: Provenance
+    needs: ['precheck', 'release']
     permissions:
       actions: read
       id-token: write
@@ -91,21 +130,40 @@ jobs:
     # Can't pin with hash due to how this workflow works.
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.9.0
     with:
-      base64-subjects: ${{ needs.build.outputs.hash }}
+      base64-subjects: ${{ needs.release.outputs.hashes }}
+      upload-assets: true
+      upload-tag-name: ${{ needs.release.outputs.tagname }}
+      provenance-name: macos-notarization-service-${{ needs.precheck.outputs.version }}.zip.intoto.jsonl
 
-  upload-artifacts:
-    # Upload the distribution and provenance to a GitHub release. They remain
-    # available as build artifacts for a while as well.
-    needs: ['build', 'provenance', 'update_release_draft']
+  prepare-for-next-development-cycle:
     runs-on: ubuntu-latest
+    needs: ['precheck', 'release', 'provenance']
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
-      - name: upload artifacts to release
-        run: >
-          gh release upload --repo ${{ github.repository }}
-          ${{ needs.build.outputs.tag }}
-          *.intoto.jsonl/* artifact/*
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Setup Git User
+        run: |
+          git config --global user.name '${{ env.BOT_USER_NAME }}'
+          git config --global user.email '${{ env.BOT_EMAIL }}'
+
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Setup Java
+        uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3.13.0
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRO }}
+          cache: maven
+
+      - id: increase-semver
+        uses: ./.github/actions/increase-semver
+        with:
+          current-version: ${{ needs.precheck.outputs.version }}
+          version-fragment: ${{ github.event.inputs.version-fragment }}
+      - name: Update next development version in POMs
+        run: |
+          ./mvnw -B versions:set versions:commit -DnewVersion=${{ steps.increase-semver.outputs.next-version }}-SNAPSHOT -DgenerateBackupPoms=false
+          git commit -a -m "Prepare for next development cycle"
+          git push origin ${{ github.ref }}

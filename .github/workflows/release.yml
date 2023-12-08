@@ -99,8 +99,8 @@ jobs:
     with:
       project-version: ${{ needs.precheck.outputs.version }}
       jreleaser-version: '1.9.0'
-      java-version: ${{ env.JAVA_VERSION }}
-      java-distribution: ${{ env.JAVA_DISTRO }}
+      java-version: '17'
+      java-distribution: 'temurin'
       rekor-log-public: true
     secrets:
       github-token: ${{ secrets.GITHUB_TOKEN }}

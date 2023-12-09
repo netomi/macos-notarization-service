@@ -34,6 +34,14 @@ jobs:
       jreleaser-version: ${{ steps.prepare-release.outputs.JRELEASER_VERSION }}
 
     steps:
+      - name: Check ref
+        shell: bash
+        run: |
+          if [ "${{ github.ref }}" != "refs/heads/main" ]]; then
+            echo "Release shall only be made from 'main' branch, current ref '${{ github.ref }}', aborting."
+            exit 1
+          fi
+
       - name: Setup Git User
         run: |
           git config --global user.name '${{ env.BOT_USER_NAME }}'
@@ -55,11 +63,6 @@ jobs:
         id: prepare-release
         shell: bash
         run: |
-          if [ ${{ github.ref }} != 'refs/heads/main' ]]; then
-            echo "Release shall only be made from 'main' branch, current ref '${{ github.ref }}', aborting."
-            exit 1
-          fi
-          
           PROJECT_VERSION="$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)"
           RELEASE_VERSION="${{ github.event.inputs.version }}"
 

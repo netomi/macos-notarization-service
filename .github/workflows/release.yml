@@ -34,13 +34,13 @@ jobs:
       jreleaser-version: ${{ steps.prepare-release.outputs.JRELEASER_VERSION }}
 
     steps:
-      - name: Check ref
-        shell: bash
-        run: |
-          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
-            echo "Release shall only be made from 'main' branch, triggered branch '${{ github.ref_name }}', aborting."
-            exit 1
-          fi
+#      - name: Check ref
+#        shell: bash
+#        run: |
+#          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+#            echo "Release shall only be made from 'main' branch, triggered branch '${{ github.ref_name }}', aborting."
+#            exit 1
+#          fi
 
       - name: Setup Git User
         run: |

@@ -15,7 +15,6 @@ env:
   BOT_EMAIL: cbi-bot@eclipse.org
   JAVA_VERSION: 17
   JAVA_DISTRO: 'temurin'
-  JRELEASER_VERSION: '1.9.0'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -29,10 +28,6 @@ jobs:
     if: github.repository == 'netomi/macos-notarization-service'
     outputs:
       release-version: ${{ steps.prepare-release.outputs.RELEASE_VERSION }}
-      java-version: ${{ steps.prepare-release.outputs.JAVA_VERSION }}
-      java-distribution: ${{ steps.prepare-release.outputs.JAVA_DISTRO }}
-      jreleaser-version: ${{ steps.prepare-release.outputs.JRELEASER_VERSION }}
-
     steps:
 #      - name: Check ref
 #        shell: bash
@@ -69,12 +64,6 @@ jobs:
           echo "PROJECT_VERSION=$(echo $PROJECT_VERSION)" >> $GITHUB_OUTPUT
           echo "VERSION=$RELEASE_VERSION" >> $GITHUB_OUTPUT
           
-          # Define the env variables as output so that we can use
-          # them in the release job.
-          echo "JAVA_VERSION=${{ env.JAVA_VERSION }}" >> $GITHUB_OUTPUT
-          echo "JAVA_DISTRO=${{ env.JAVA_DISTRO }}" >> $GITHUB_OUTPUT
-          echo "JRELEASER_VERSION=${{ env.JRELEASER_VERSION }}" >> $GITHUB_OUTPUT
-
           echo "Project version: $PROJECT_VERSION"
           echo "Release version: $RELEASE_VERSION"
           
@@ -100,9 +89,9 @@ jobs:
     with:
       project-version: ${{ needs.precheck.outputs.release-version }}
       branch: ${{ github.ref_name }}
-      jreleaser-version: ${{ needs.precheck.outputs.jreleaser-version }}
-      java-version: ${{ needs.precheck.outputs.java-version }}
-      java-distribution: ${{ needs.precheck.outputs.java-distribution }}
+      jreleaser-version: '1.9.0'
+      java-version: 17
+      java-distribution: 'temurin'
       rekor-log-public: true
     secrets:
       github-token: ${{ secrets.GITHUB_TOKEN }}

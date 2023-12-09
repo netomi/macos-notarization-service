@@ -30,7 +30,11 @@ jobs:
 #    if: github.repository == 'eclipse-cbi/macos-notarization-service'
 #    if: success() && github.ref == 'refs/heads/main'
     outputs:
-      version: ${{ steps.prepare-release.outputs.VERSION }}
+      release-version: ${{ steps.prepare-release.outputs.RELEASE_VERSION }}
+      java-version: ${{ steps.prepare-release.outputs.JAVA_VERSION }}
+      java-distribution: ${{ steps.prepare-release.outputs.JAVA_DISTRO }}
+      jreleaser-version: ${{ steps.prepare-release.outputs.JRELEASER_VERSION }}
+
     steps:
       - name: Setup Git User
         run: |
@@ -58,11 +62,15 @@ jobs:
 
           echo "PROJECT_VERSION=$(echo $PROJECT_VERSION)" >> $GITHUB_OUTPUT
           echo "VERSION=$RELEASE_VERSION" >> $GITHUB_OUTPUT
+          
+          # Define the env variables as output so that we can use
+          # them in the release job.
+          echo "JAVA_VERSION=${{ env.JAVA_VERSION }}" >> $GITHUB_OUTPUT
+          echo "JAVA_DISTRO=${{ env.JAVA_DISTRO }}" >> $GITHUB_OUTPUT
+          echo "JRELEASER_VERSION=${{ env.JRELEASER_VERSION }}" >> $GITHUB_OUTPUT
 
           echo "Project version: $PROJECT_VERSION"
           echo "Release version: $RELEASE_VERSION"
-
-          git show-ref --tags --verify "refs/tags/v${RELEASE_VERSION}"
           
           if git show-ref --tags --verify --quiet "refs/tags/v${RELEASE_VERSION}"; then
             echo "Release Tag 'v${TAG}' already exists, aborting."
@@ -76,24 +84,22 @@ jobs:
           fi
 
   release:
-    runs-on: ubuntu-latest
     needs: ['precheck']
     permissions:
       contents: write
       actions: read
       packages: write
       id-token: write
-    steps:
-      - uses: jreleaser/release-action/.github/workflows/builder_slsa3.yml@java
-        with:
-          project-version: ${{ needs.precheck.outputs.version }}
-          branch: ${{ github.ref_name }}
-          jreleaser-version: ${{ env.JRELEASER_VERSION }}
-          java-version: ${{ env.JAVA_VERSION }}
-          java-distribution: ${{ env.JAVA_DISTRO }}
-          rekor-log-public: true
-        secrets:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+    uses: jreleaser/release-action/.github/workflows/builder_slsa3.yml@java
+    with:
+      project-version: ${{ needs.precheck.outputs.release-version }}
+      branch: ${{ github.ref_name }}
+      jreleaser-version: ${{ env.JRELEASER_VERSION }}
+      java-version: ${{ env.JAVA_VERSION }}
+      java-distribution: ${{ env.JAVA_DISTRO }}
+      rekor-log-public: true
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
 
   prepare-for-next-development-cycle:
     runs-on: ubuntu-latest
@@ -120,7 +126,7 @@ jobs:
       - id: increase-semver
         uses: ./.github/actions/increase-semver
         with:
-          current-version: ${{ needs.precheck.outputs.version }}
+          current-version: ${{ needs.precheck.outputs.release-version }}
           version-fragment: ${{ github.event.inputs.version-fragment }}
       - name: Update next development version in POMs
         run: |

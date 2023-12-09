@@ -38,7 +38,7 @@ jobs:
         shell: bash
         run: |
           if [ "${{ github.ref }}" != "refs/heads/main" ]; then
-            echo "Release shall only be made from 'main' branch, current ref '${{ github.ref }}', aborting."
+            echo "Release shall only be made from 'main' branch, triggered branch '${{ github.ref_name }}', aborting."
             exit 1
           fi
 

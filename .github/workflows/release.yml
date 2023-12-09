@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-22.04
     permissions:
       contents: write
-    if: github.repository == 'netomi/macos-notarization-service' && github.ref == 'refs/heads/main'
+    if: github.repository == 'netomi/macos-notarization-service'
     outputs:
       release-version: ${{ steps.prepare-release.outputs.RELEASE_VERSION }}
       java-version: ${{ steps.prepare-release.outputs.JAVA_VERSION }}
@@ -55,6 +55,11 @@ jobs:
         id: prepare-release
         shell: bash
         run: |
+          if [ ${{ github.ref }} != 'refs/heads/main' ]]; then
+            echo "Release shall only be made from 'main' branch, current ref '${{ github.ref }}', aborting."
+            exit 1
+          fi
+          
           PROJECT_VERSION="$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)"
           RELEASE_VERSION="${{ github.event.inputs.version }}"
 

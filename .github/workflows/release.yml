@@ -13,7 +13,7 @@ on:
 env:
   BOT_USER_NAME: eclipse-cbi-bot
   BOT_EMAIL: cbi-bot@eclipse.org
-  JAVA_VERSION: '17'
+  JAVA_VERSION: 17
   JAVA_DISTRO: 'temurin'
   JRELEASER_VERSION: '1.9.0'
 

@@ -90,11 +90,8 @@ release:
           - 'bot'
 
 catalog:
-  sbom:
-    cyclonedx:
-      active: ALWAYS
   slsa:
-    active: ALWAYS
+    active: RELEASE
 
 hooks:
   script:
@@ -110,3 +107,7 @@ distributions:
     type: JAVA_BINARY
     artifacts:
       - path: 'target/distributions/{{projectName}}-{{projectVersion}}.zip'
+
+files:
+  artifacts:
+    - path: 'target/{{projectName}}-{{projectVersion}}-cyclonedx.json'

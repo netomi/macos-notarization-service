@@ -23,12 +23,10 @@ concurrency:
 
 jobs:
   precheck:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
-    # don't run this workflow in forks
-#    if: github.repository == 'eclipse-cbi/macos-notarization-service'
-#    if: success() && github.ref == 'refs/heads/main'
+    if: github.repository == 'netomi/macos-notarization-service' && github.ref == 'refs/heads/main'
     outputs:
       release-version: ${{ steps.prepare-release.outputs.RELEASE_VERSION }}
       java-version: ${{ steps.prepare-release.outputs.JAVA_VERSION }}
@@ -73,7 +71,7 @@ jobs:
           echo "Release version: $RELEASE_VERSION"
           
           if git show-ref --tags --verify --quiet "refs/tags/v${RELEASE_VERSION}"; then
-            echo "Release Tag 'v${TAG}' already exists, aborting."
+            echo "Release Tag 'v${RELEASE_VERSION}' already exists, aborting."
             exit 1
           fi
   
@@ -102,7 +100,7 @@ jobs:
       github-token: ${{ secrets.GITHUB_TOKEN }}
 
   prepare-for-next-development-cycle:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: ['precheck', 'release']
     permissions:
       contents: write

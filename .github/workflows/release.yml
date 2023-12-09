@@ -94,9 +94,9 @@ jobs:
     with:
       project-version: ${{ needs.precheck.outputs.release-version }}
       branch: ${{ github.ref_name }}
-      jreleaser-version: ${{ env.JRELEASER_VERSION }}
-      java-version: ${{ env.JAVA_VERSION }}
-      java-distribution: ${{ env.JAVA_DISTRO }}
+      jreleaser-version: ${{ needs.precheck.outputs.jreleaser-version }}
+      java-version: ${{ needs.precheck.outputs.java-version }}
+      java-distribution: ${{ needs.precheck.outputs.java-distribution }}
       rekor-log-public: true
     secrets:
       github-token: ${{ secrets.GITHUB_TOKEN }}

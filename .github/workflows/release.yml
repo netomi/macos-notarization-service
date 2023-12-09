@@ -60,6 +60,8 @@ jobs:
           echo "Project version: $PROJECT_VERSION"
           echo "Release version: $RELEASE_VERSION"
 
+          git show-ref --tags --verify "refs/tags/v${RELEASE_VERSION}"
+          
           if git show-ref --tags --verify --quiet "refs/tags/v${RELEASE_VERSION}"; then
             echo "Release Tag 'v${TAG}' already exists, aborting."
             exit 1
